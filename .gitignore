@@ -1,0 +1,5 @@
+.idea
+tmp
+build-errors.log
+*.sqlite*
+*.db*

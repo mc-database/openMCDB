@@ -1,0 +1,8 @@
+.git/
+.idea/
+tmp/
+*.sqlite*
+*.sqlite-*
+*.db*
+*.log
+.air.toml
