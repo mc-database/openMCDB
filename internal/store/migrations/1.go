@@ -25,7 +25,6 @@ CREATE TABLE snapshots (
     render_distance INTEGER,
     simulation_distance INTEGER,
     has_iris INTEGER,
-    shaders_enabled INTEGER,
     resolution_bucket TEXT,
     fullscreen INTEGER,
     locale TEXT,

@@ -21,7 +21,6 @@ type Snapshot struct {
 	RenderDistance     *int    `db:"render_distance" json:"render_distance"`
 	SimulationDistance *int    `db:"simulation_distance" json:"simulation_distance"`
 	HasIris            *bool   `db:"has_iris" json:"has_iris"`
-	ShadersEnabled     *bool   `db:"shaders_enabled" json:"shaders_enabled"`
 	ResolutionBucket   *string `db:"resolution_bucket" json:"resolution_bucket"`
 	Fullscreen         *bool   `db:"fullscreen" json:"fullscreen"`
 	Locale             *string `db:"locale" json:"locale"`
