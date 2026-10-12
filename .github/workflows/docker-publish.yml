@@ -3,12 +3,11 @@ name: Publish Docker image
 on:
   push:
     branches: ["master"]
-    tags: ["v*.*.*"]
   workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: minecraft-db/openmcdb
+  IMAGE_NAME: mc-database/openmcdb
 
 jobs:
   build-and-push:
