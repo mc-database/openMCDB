@@ -21,6 +21,7 @@ CREATE TABLE snapshots (
     gpu_model TEXT,
     memory_mb INTEGER,
     system_memory_mb INTEGER,
+    vram_mb INTEGER,
     graphics_api TEXT,
     render_distance INTEGER,
     simulation_distance INTEGER,

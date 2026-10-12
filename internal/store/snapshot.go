@@ -17,6 +17,7 @@ type Snapshot struct {
 	GPUModel           *string `db:"gpu_model" json:"gpu_model"`
 	MemoryMB           *int    `db:"memory_mb" json:"memory_mb"`
 	SystemMemoryMB     *int    `db:"system_memory_mb" json:"system_memory_mb"`
+	VRAMMB             *int    `db:"vram_mb" json:"vram_mb"`
 	GraphicsAPI        *string `db:"graphics_api" json:"graphics_api"`
 	RenderDistance     *int    `db:"render_distance" json:"render_distance"`
 	SimulationDistance *int    `db:"simulation_distance" json:"simulation_distance"`
