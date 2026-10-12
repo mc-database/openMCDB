@@ -15,7 +15,7 @@ import (
 )
 
 func main() {
-	log.Printf("openmcdb: properties %s", properties.Version)
+	log.Printf("openmcdb %s", properties.Version)
 
 	cfg := server.Config{
 		DBPath: properties.DBPath,
