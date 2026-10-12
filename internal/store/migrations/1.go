@@ -27,7 +27,6 @@ CREATE TABLE snapshots (
     simulation_distance INTEGER,
     has_iris INTEGER,
     resolution_bucket TEXT,
-    fullscreen INTEGER,
     locale TEXT,
     mod_count INTEGER
 );

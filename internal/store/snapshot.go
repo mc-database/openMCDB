@@ -23,7 +23,6 @@ type Snapshot struct {
 	SimulationDistance *int    `db:"simulation_distance" json:"simulation_distance"`
 	HasIris            *bool   `db:"has_iris" json:"has_iris"`
 	ResolutionBucket   *string `db:"resolution_bucket" json:"resolution_bucket"`
-	Fullscreen         *bool   `db:"fullscreen" json:"fullscreen"`
 	Locale             *string `db:"locale" json:"locale"`
 	ModCount           *int    `db:"mod_count" json:"mod_count"`
 }
