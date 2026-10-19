@@ -6,3 +6,4 @@ tmp/
 *.db*
 *.log
 .air.toml
+.env

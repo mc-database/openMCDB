@@ -3,6 +3,10 @@ services:
     build: .
     ports:
       - "8000:8000"
+    environment:
+      OPENMCDB_RATE_LIMIT_4H: 1
+      OPENMCDB_RATE_LIMIT_24H: 4
+      OPENMCDB_TRUST_REAL_IP: false
     volumes:
       - ./data:/data
     restart: unless-stopped

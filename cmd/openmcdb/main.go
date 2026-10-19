@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"openmcdb/internal/properties"
+	"openmcdb/internal/ratelimit"
 	"os"
 	"os/signal"
 	"syscall"
@@ -19,6 +20,14 @@ func main() {
 
 	cfg := server.Config{
 		DBPath: properties.DBPath,
+		SubmitRateLimits: []ratelimit.Limit{
+			{Max: properties.SubmitRateLimit4h, Window: 4 * time.Hour},
+			{Max: properties.SubmitRateLimit24h, Window: 24 * time.Hour},
+		},
+		TrustRealIP: properties.TrustRealIP,
+	}
+	if cfg.TrustRealIP {
+		log.Printf("!! openmcdb: WARNING trusting X-Real-IP headers !!")
 	}
 
 	srv, err := server.New(cfg)
