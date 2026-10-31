@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-var Version = "0.3.1"
+var Version = "0.3.2"
 
 type Config struct {
 	Addr                     string

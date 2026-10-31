@@ -18,7 +18,7 @@ type store struct {
 }
 
 const insertSnapshotQuery = `
-INSERT INTO survey_snapshots (
+INSERT INTO survey.snapshots (
     schema, first_request, mc_version, mod_version,
     environment, loader, loader_version, java_version, os_name, os_arch,
     cpu_cores, cpu_model, gpu_model, memory_mb, system_memory_mb, vram_mb,
@@ -50,6 +50,6 @@ func (s *store) Count(ctx context.Context) (int64, error) {
 	defer cancel()
 
 	var count int64
-	err := s.db.GetContext(ctx, &count, `SELECT COUNT(*) FROM survey_snapshots`)
+	err := s.db.GetContext(ctx, &count, `SELECT COUNT(*) FROM survey.snapshots`)
 	return count, err
 }
