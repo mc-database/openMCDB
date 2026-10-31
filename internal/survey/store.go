@@ -19,13 +19,13 @@ type store struct {
 
 const insertSnapshotQuery = `
 INSERT INTO survey_snapshots (
-    schema, first_request, received_at, mc_version, mod_version,
+    schema, first_request, mc_version, mod_version,
     environment, loader, loader_version, java_version, os_name, os_arch,
     cpu_cores, cpu_model, gpu_model, memory_mb, system_memory_mb, vram_mb,
     graphics_api, render_distance, simulation_distance, has_iris,
     resolution_bucket, locale, mod_count
 ) VALUES (
-    :schema, :first_request, :received_at, :mc_version, :mod_version,
+    :schema, :first_request, :mc_version, :mod_version,
     :environment, :loader, :loader_version, :java_version, :os_name, :os_arch,
     :cpu_cores, :cpu_model, :gpu_model, :memory_mb, :system_memory_mb, :vram_mb,
     :graphics_api, :render_distance, :simulation_distance, :has_iris,
@@ -41,8 +41,6 @@ func (s *store) Insert(ctx context.Context, snap Snapshot) error {
 	ctx, cancel := context.WithTimeout(ctx, queryTimeout)
 	defer cancel()
 
-	now := time.Now().Unix()
-	snap.ReceivedAt = &now
 	_, err := s.db.NamedExecContext(ctx, insertSnapshotQuery, snap)
 	return err
 }
