@@ -4,9 +4,36 @@ services:
     ports:
       - "8000:8000"
     environment:
-      OPENMCDB_RATE_LIMIT_4H: 1
-      OPENMCDB_RATE_LIMIT_24H: 4
-      OPENMCDB_TRUST_REAL_IP: false
-    volumes:
-      - ./data:/data
+      OPENMCDB_ADDR: "0.0.0.0:8000"
+      OPENMCDB_DATABASE_URL: "postgres://postgres:5432/?sslmode=disable"
+      PGDATABASE: "${POSTGRES_DB:-openmcdb}"
+      PGUSER: "${POSTGRES_USER:-openmcdb}"
+      PGPASSWORD: "${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}"
+      OPENMCDB_SURVEY_SUBMIT_RATE_LIMIT_4H: "${OPENMCDB_SURVEY_SUBMIT_RATE_LIMIT_4H:-1}"
+      OPENMCDB_SURVEY_SUBMIT_RATE_LIMIT_24H: "${OPENMCDB_SURVEY_SUBMIT_RATE_LIMIT_24H:-4}"
+      OPENMCDB_TRUST_REAL_IP: "${OPENMCDB_TRUST_REAL_IP:-false}"
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
+
+  postgres:
+    image: postgres:18-bookworm
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: "${POSTGRES_DB:-openmcdb}"
+      POSTGRES_USER: "${POSTGRES_USER:-openmcdb}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: 'pg_isready -h 127.0.0.1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"'
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

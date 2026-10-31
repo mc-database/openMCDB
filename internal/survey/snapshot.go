@@ -1,4 +1,4 @@
-package store
+package survey
 
 type Snapshot struct {
 	Schema             *int    `db:"schema" json:"schema"`

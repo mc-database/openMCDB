@@ -6,15 +6,32 @@ import (
 	"strconv"
 )
 
-var Version = "0.2.0"
-var Addr = "0.0.0.0:8000"
-var DBPath = "openmcdb.sqlite"
+var Version = "0.3.0"
 
-var SubmitRateLimit4h = intEnv("OPENMCDB_RATE_LIMIT_4H", 1)
+type Config struct {
+	Addr                     string
+	DatabaseURL              string
+	SurveySubmitRateLimit4h  int
+	SurveySubmitRateLimit24h int
+	TrustRealIP              bool
+}
 
-var SubmitRateLimit24h = intEnv("OPENMCDB_RATE_LIMIT_24H", 4)
+func Load() Config {
+	return Config{
+		Addr:                     stringEnv("OPENMCDB_ADDR", "0.0.0.0:8000"),
+		DatabaseURL:              os.Getenv("OPENMCDB_DATABASE_URL"),
+		SurveySubmitRateLimit4h:  intEnv("OPENMCDB_SURVEY_SUBMIT_RATE_LIMIT_4H", 1),
+		SurveySubmitRateLimit24h: intEnv("OPENMCDB_SURVEY_SUBMIT_RATE_LIMIT_24H", 4),
+		TrustRealIP:              boolEnv("OPENMCDB_TRUST_REAL_IP", false),
+	}
+}
 
-var TrustRealIP = boolEnv("OPENMCDB_TRUST_REAL_IP", false)
+func stringEnv(name string, fallback string) string {
+	if value := os.Getenv(name); value != "" {
+		return value
+	}
+	return fallback
+}
 
 func intEnv(name string, fallback int) int {
 	raw, ok := os.LookupEnv(name)
