@@ -13,7 +13,7 @@ type Migration struct {
 }
 
 const schemaMigrationsTable = `
-CREATE TABLE IF NOT EXISTS schema_migrations (
+CREATE TABLE IF NOT EXISTS public.schema_migrations (
     module TEXT NOT NULL,
     version INT NOT NULL,
     PRIMARY KEY (module, version)
