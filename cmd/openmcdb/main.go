@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"openmcdb/internal/database"
+	"openmcdb/internal/modrinth"
 	"openmcdb/internal/properties"
 	"openmcdb/internal/ratelimit"
 	"openmcdb/internal/server"
@@ -46,6 +47,27 @@ func run() error {
 		return err
 	}
 	cancelStartup()
+
+	crawlCfg, err := modrinth.LoadCrawlConfig()
+	if err != nil {
+		return err
+	}
+	crawler, err := modrinth.Init(ctx, db, crawlCfg)
+	if err != nil {
+		return err
+	}
+	crawlerCtx, cancelCrawler := context.WithCancel(ctx)
+	crawlerDone := crawler.Start(crawlerCtx)
+	defer func() {
+		cancelCrawler()
+		shutdownTimer := time.NewTimer(2 * time.Minute)
+		defer shutdownTimer.Stop()
+		select {
+		case <-crawlerDone:
+		case <-shutdownTimer.C:
+			log.Printf("openmcdb: crawler shutdown timed out after 2 minutes")
+		}
+	}()
 
 	router := server.New(db.PingContext)
 	surveyModule := survey.New(db, survey.Config{

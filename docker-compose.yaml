@@ -12,6 +12,12 @@ services:
       OPENMCDB_SURVEY_SUBMIT_RATE_LIMIT_4H: "${OPENMCDB_SURVEY_SUBMIT_RATE_LIMIT_4H:-1}"
       OPENMCDB_SURVEY_SUBMIT_RATE_LIMIT_24H: "${OPENMCDB_SURVEY_SUBMIT_RATE_LIMIT_24H:-4}"
       OPENMCDB_TRUST_REAL_IP: "${OPENMCDB_TRUST_REAL_IP:-false}"
+      OPENMCDB_MODRINTH_ENABLED: "${OPENMCDB_MODRINTH_ENABLED:-true}"
+      OPENMCDB_MODRINTH_INTERVAL: "${OPENMCDB_MODRINTH_INTERVAL:-24h}"
+      OPENMCDB_MODRINTH_HOUR_UTC: "${OPENMCDB_MODRINTH_HOUR_UTC:-0}"
+      OPENMCDB_MODRINTH_MINUTE_UTC: "${OPENMCDB_MODRINTH_MINUTE_UTC:-0}"
+      OPENMCDB_MODRINTH_RUN_ON_START: "${OPENMCDB_MODRINTH_RUN_ON_START:-false}"
+    stop_grace_period: 150s
     depends_on:
       postgres:
         condition: service_healthy
@@ -25,6 +31,14 @@ services:
       POSTGRES_DB: "${POSTGRES_DB:-openmcdb}"
       POSTGRES_USER: "${POSTGRES_USER:-openmcdb}"
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}"
+    command:
+      - postgres
+      - -c
+      - max_wal_size=8GB
+      - -c
+      - checkpoint_timeout=15min
+      - -c
+      - checkpoint_completion_target=0.9
     volumes:
       - postgres_data:/var/lib/postgresql
     healthcheck:

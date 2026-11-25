@@ -1,3 +1,5 @@
 # openMCDB
 
-Backend for anonymous usage surveying for the Minecraft community
+Backend for data analysis of Minecraft:
+- Open MC Survey
+- Modrinth
