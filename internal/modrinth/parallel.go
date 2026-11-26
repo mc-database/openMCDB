@@ -52,9 +52,7 @@ func fetchSearchPhase(ctx context.Context, api *client, st *store, maxProjects i
 		pids[i] = h.ProjectID
 	}
 	if err != nil {
-		var coverage *searchCoverageError
-		ok := errors.As(err, &coverage)
-		if !ok || !coverage.TailOnly {
+		if _, ok := errors.AsType[*searchCoverageError](err); !ok {
 			return pids, total, err
 		}
 	}
@@ -66,11 +64,27 @@ func fetchSearchPhase(ctx context.Context, api *client, st *store, maxProjects i
 
 func enumerateSearch(ctx context.Context, api *client, concurrency, maxProjects int) ([]searchHit, int, error) {
 	var res searchPass
+	seen := make(map[string]int)
 	for range 2 {
-		var err error
-		res, err = fetchSearchPass(ctx, api, concurrency, maxProjects)
+		pass, err := fetchSearchPass(ctx, api, concurrency, maxProjects)
 		if err != nil {
 			return res.hits, res.total, err
+		}
+		res.total = max(res.total, pass.total)
+		res.expected = searchResultLimit(res.total, maxProjects)
+		res.duplicates += pass.duplicates
+		res.shortPages += pass.shortPages
+		res.changedTotalPages += pass.changedTotalPages
+		for _, h := range pass.hits {
+			if i, ok := seen[h.ProjectID]; ok {
+				res.hits[i] = h
+				continue
+			}
+			if maxProjects > 0 && len(res.hits) >= maxProjects {
+				continue
+			}
+			seen[h.ProjectID] = len(res.hits)
+			res.hits = append(res.hits, h)
 		}
 		if res.complete() {
 			return res.hits, res.total, nil
@@ -83,7 +97,6 @@ func enumerateSearch(ctx context.Context, api *client, concurrency, maxProjects 
 		Duplicates:        res.duplicates,
 		ShortPages:        res.shortPages,
 		ChangedTotalPages: res.changedTotalPages,
-		TailOnly:          len(res.hits) < res.expected && res.duplicates == 0 && res.changedTotalPages == 0 && res.shortPages == 1 && res.shortPageOffset == res.finalPageOffset,
 	}
 }
 
@@ -94,11 +107,10 @@ type searchCoverageError struct {
 	Duplicates        int
 	ShortPages        int
 	ChangedTotalPages int
-	TailOnly          bool
 }
 
 func (e *searchCoverageError) Error() string {
-	return fmt.Sprintf("modrinth: incomplete search enumeration after 2 passes: expected=%d enumerated=%d reported_total=%d duplicates=%d short_pages=%d changed_total_pages=%d tail_only=%t; total_hits may overstate retrievable projects", e.Expected, e.Enumerated, e.ReportedTotal, e.Duplicates, e.ShortPages, e.ChangedTotalPages, e.TailOnly)
+	return fmt.Sprintf("modrinth: inexact search enumeration after 2 passes: expected=%d enumerated=%d reported_total=%d duplicates=%d short_pages=%d changed_total_pages=%d", e.Expected, e.Enumerated, e.ReportedTotal, e.Duplicates, e.ShortPages, e.ChangedTotalPages)
 }
 
 type searchPass struct {
@@ -108,8 +120,6 @@ type searchPass struct {
 	duplicates        int
 	shortPages        int
 	changedTotalPages int
-	shortPageOffset   int
-	finalPageOffset   int
 }
 
 func (p searchPass) complete() bool {
@@ -143,7 +153,6 @@ func fetchSearchPass(ctx context.Context, api *client, concurrency, maxProjects 
 	for offset := searchPageSize; offset < out.expected; {
 		limit := min(searchPageSize, out.expected-offset)
 		work = append(work, searchPages{offset: offset, limit: limit})
-		out.finalPageOffset = offset
 		offset += limit
 	}
 	results := make([]searchResults, len(work))
@@ -160,10 +169,9 @@ func fetchSearchPass(ctx context.Context, api *client, concurrency, maxProjects 
 	})
 
 	seen := make(map[string]bool)
-	collect := func(res searchResults, wanted, offset int) {
+	collect := func(res searchResults, wanted int) {
 		if len(res.Hits) < wanted {
 			out.shortPages++
-			out.shortPageOffset = offset
 		}
 		if res.TotalHits != out.total {
 			out.changedTotalPages++
@@ -177,9 +185,9 @@ func fetchSearchPass(ctx context.Context, api *client, concurrency, maxProjects 
 			out.hits = append(out.hits, h)
 		}
 	}
-	collect(first, min(firstLimit, out.expected), 0)
+	collect(first, min(firstLimit, out.expected))
 	for i, res := range results {
-		collect(res, work[i].limit, work[i].offset)
+		collect(res, work[i].limit)
 	}
 	return out, err
 }

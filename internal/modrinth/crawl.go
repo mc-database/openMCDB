@@ -304,14 +304,39 @@ func crawlProjects(ctx context.Context, api *client, st *store) error {
 	st.coverage["search_enumerated"] = len(pids)
 	if err != nil {
 		var coverage *searchCoverageError
-		ok := errors.As(err, &coverage)
-		if !ok || !coverage.TailOnly {
+		if !errors.As(err, &coverage) {
 			return err
 		}
-		st.coverage["search_shortfall"] = coverage.Expected - coverage.Enumerated
-		log.Printf("openmcdb/modrinth: accepting explicitly partial search tail: %v; unobserved projects remain untouched", err)
+		st.coverage["search_inexact"] = 1
+		st.coverage["search_shortfall"] = max(0, coverage.Expected-coverage.Enumerated)
+		st.coverage["search_duplicates"] = coverage.Duplicates
+		st.coverage["search_short_pages"] = coverage.ShortPages
+		st.coverage["search_changed_total_pages"] = coverage.ChangedTotalPages
+		log.Printf("openmcdb/modrinth: continuing with observed projects: %v; unobserved projects remain untouched", err)
 	}
-	if err := fanoutBatches(ctx, st, pids, api.projectsBatch, st.stageProjectDetails); err != nil {
+	type projectBatch struct {
+		rows    []apiProject
+		missing []string
+	}
+	fetch := func(gctx context.Context, ids []string) (projectBatch, error) {
+		rows, err := api.projectsBatch(gctx, ids)
+		result := projectBatch{rows: rows}
+		if err != nil {
+			var coverage *batchCoverageError
+			if !errors.As(err, &coverage) || !coverage.onlyMissing() {
+				return result, err
+			}
+			result.missing = coverage.missing
+		}
+		return result, nil
+	}
+	if err := fanoutBatches(ctx, st, pids, fetch, func(gctx context.Context, batch projectBatch) error {
+		if len(batch.missing) > 0 {
+			st.coverage["projects_unavailable"] += len(batch.missing)
+			log.Printf("openmcdb/modrinth: skipping projects unavailable from details API: %s; existing project data remains untouched", idPreview(batch.missing))
+		}
+		return st.stageProjectDetails(gctx, batch.rows)
+	}); err != nil {
 		return fmt.Errorf("projects: %w", err)
 	}
 	log.Printf("openmcdb/modrinth: staged %d/%d enumerated projects, skipped %d unsupported servers (search total=%d, cap=%d, facets=%q)", st.coverage["projects"], len(pids), st.coverage["servers_skipped_unsupported"], total, st.cfg.MaxProjects, st.cfg.ScopeFacet)
